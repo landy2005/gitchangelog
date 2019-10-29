@@ -20,6 +20,8 @@ import errno
 
 from subprocess import Popen, PIPE
 
+from numpy import unicode
+
 try:
     import pystache
 except ImportError:  ## pragma: no cover
@@ -570,7 +572,7 @@ class Phile(object):
         ...         _obj.seek(0)
         ...         return _obj
         ... else:
-        ...     from cStringIO import StringIO as File
+        ...     from io import StringIO as File
 
         >>> f = Phile(File("a-b-c-d"))
 
@@ -794,11 +796,11 @@ class GitCommit(SubGitObjectMixin):
     ``GitCommit`` offers a simple direct API to trailer values. These
     are like RFC822's header value but are at the end of body:
 
-        >>> BODY = '''\
-        ... Stuff in the body
-        ... Change-id: 1234
-        ... Value-X: Supports multi
-        ...   line values'''
+        >>> BODY = ('\\n'
+'        ... Stuff in the body\n'
+'        ... Change-id: 1234\n'
+'        ... Value-X: Supports multi\n'
+'        ...   line values')
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_change_id
@@ -810,12 +812,12 @@ class GitCommit(SubGitObjectMixin):
     Notice how the multi-line value was unindented.
     In case of multiple values, these are concatened in lists:
 
-        >>> BODY = '''\
-        ... Stuff in the body
-        ... Co-Authored-By: Bob
-        ... Co-Authored-By: Alice
-        ... Co-Authored-By: Jack
-        ... '''
+        >>> BODY = ('\\n'
+'        ... Stuff in the body\n'
+'        ... Co-Authored-By: Bob\n'
+'        ... Co-Authored-By: Alice\n'
+'        ... Co-Authored-By: Jack\n'
+'        ... ')
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_co_authored_by
@@ -829,12 +831,12 @@ class GitCommit(SubGitObjectMixin):
     Authors
     -------
 
-        >>> BODY = '''\
-        ... Stuff in the body
-        ... Co-Authored-By: Bob
-        ... Co-Authored-By: Alice
-        ... Co-Authored-By: Jack
-        ... '''
+        >>> BODY = ('\\n'
+'        ... Stuff in the body\n'
+'        ... Co-Authored-By: Bob\n'
+'        ... Co-Authored-By: Alice\n'
+'        ... Co-Authored-By: Jack\n'
+'        ... ')
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.author_names
@@ -1329,11 +1331,17 @@ def rest_py(data, opts={}):
         return s
 
     def render_commit(commit, opts=opts):
-        subject = commit["subject"]
-        subject += " [%s]" % (", ".join(commit["authors"]), )
+        # Add the id and the date on which the commit was made
+        subject = ""
+        subject += "ID: [%s]" % ("".join(commit["id"])) + '\n\n'
+        subject += "Date: [%s]" % ("".join(commit["date"])) + '\n\n'
+        subject += "Description: [%s]" % ("".join(commit["subject"])) + '\n\n'
+        subject += "Author: [%s]" % (", ".join(commit["authors"])) + '\n\n'
 
         entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip() + "\n"
+
+        entry += "\n"
 
         if commit["body"]:
             entry += "\n" + indent(commit["body"])
@@ -1344,9 +1352,16 @@ def rest_py(data, opts={}):
     if data["title"]:
         yield rest_title(data["title"], char="=") + "\n\n"
 
+    # Save the commits output in a plain text file .md
+    dir_fichero = 'fichero_git.md'
+
+    fichero = open(dir_fichero, 'w')
     for version in data["versions"]:
         if len(version["sections"]) > 0:
-            yield render_version(version) + "\n\n"
+            info = render_version(version) + "\n\n"
+            fichero.write(info)
+            yield info
+    fichero.close()
 
 
 ## formatter engines
@@ -1598,6 +1613,9 @@ def versions_data_iter(repository, revlist=None,
             ## Finally storing the commit in the matching section
 
             sections[matched_section].append({
+                # Add the id and date to use in the code output.
+                "id": commit.sha1_short,
+                "date": commit.author_date,
                 "author": commit.author_name,
                 "authors": commit.author_names,
                 "subject": subject_process(commit.subject),
