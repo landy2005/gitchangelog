@@ -1613,14 +1613,14 @@ def versions_data_iter(repository, revlist=None,
             ## Finally storing the commit in the matching section
 
             sections[matched_section].append({
-                # Add the id and date to use in the code output.
+                ## Add the id and date to use in the code output.
                 "id": commit.sha1_short,
                 "date": commit.author_date,
                 "author": commit.author_name,
-                "authors": commit.author_names,
+                "authors": commit.authors,
                 "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
-                "commit": commit,
+                "shortRemote": get_url(repository, commit),
             })
 
         ## Flush current version
@@ -1631,6 +1631,20 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
+## Method that gets the complete url of the commit performed
+def get_url(repository, commit):
+    try:
+        id = commit.sha1_short
+        url = repository.git.config('remote.origin.url')
+        if url:
+            new_url = url[:-4]
+            final_url = new_url + "/commit/" + id
+            return final_url
+        else:
+            return url
+
+    except ValueError:
+        return None
 
 def changelog(output_engine=rest_py,
               unreleased_version_label="unreleased",
