@@ -1648,24 +1648,6 @@ def get_url(repository, commit):
     except ValueError:
         return None
 
-def revs_range(*revlist):
-    revs = []
-    try:
-        print("************************************************************")
-        print("************************************************************")
-        print("**                REPORTS BY RANK                         **")
-        print("************************************************************")
-        print("************************************************************")
-        first_commit = str(input("**  Enter the first ID to evaluate: "))
-        revs.append(first_commit)
-        second_commit = str(input("**  Enter the second ID to evaluate: "))
-        revs.append(second_commit)
-        print("************************************************************")
-        print("************************************************************")
-        return revs
-
-    except ValueError:
-        return None
 
 def changelog(output_engine=rest_py,
               unreleased_version_label="unreleased",
