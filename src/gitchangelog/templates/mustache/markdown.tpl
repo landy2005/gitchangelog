@@ -10,16 +10,8 @@
 ### {{{label}}}
 
 {{#commits}}
-* **ID:** [{{{id}}}]({{{shortRemote}}})
-* **Fecha:** {{{date}}}
-* **Commit:** {{{subject}}}
-* **Autor:** {{#authors}}{{{.}}}{{/authors}}
-
-
-{{#body}}
-
-{{{body_indented}}}
-{{/body}}
+* [{{{id}}}]({{{shortRemote}}}) - {{{subject}}} - {{#authors}}{{{.}}}{{/authors}} - {{{date}}}
+  {{#body}}{{{body_indented}}}{{/body}}
 
 {{/commits}}
 {{/sections}}
