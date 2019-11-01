@@ -1558,6 +1558,8 @@ def versions_data_iter(repository, revlist=None,
                 if rev.startswith("^")] if revlist else []
 
     revs = repository.git.rev_list(*revlist).split("\n") if revlist else []
+
+
     revs = [rev for rev in revs if rev != ""]
 
     if revlist and not revs:
@@ -1642,6 +1644,25 @@ def get_url(repository, commit):
             return final_url
         else:
             return url
+
+    except ValueError:
+        return None
+
+def revs_range(*revlist):
+    revs = []
+    try:
+        print("************************************************************")
+        print("************************************************************")
+        print("**                REPORTS BY RANK                         **")
+        print("************************************************************")
+        print("************************************************************")
+        first_commit = str(input("**  Enter the first ID to evaluate: "))
+        revs.append(first_commit)
+        second_commit = str(input("**  Enter the second ID to evaluate: "))
+        revs.append(second_commit)
+        print("************************************************************")
+        print("************************************************************")
+        return revs
 
     except ValueError:
         return None
