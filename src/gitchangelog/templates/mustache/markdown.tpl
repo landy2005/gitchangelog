@@ -1,13 +1,14 @@
 {{#general_title}}
 # {{{title}}}
 
-
 {{/general_title}}
+
 {{#versions}}
-## {{{label}}}
+## Commits description
+
+#### {{{solicited_commits}}}
 
 {{#sections}}
-### {{{label}}}
 
 {{#commits}}
 * [{{{id}}}]({{{shortRemote}}}) - {{{date}}} - {{{subject}}} - {{#body}}{{{body_indented}}}{{/body}} - {{#authors}}{{{.}}}{{/authors}}

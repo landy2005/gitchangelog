@@ -1352,16 +1352,10 @@ def rest_py(data, opts={}):
     if data["title"]:
         yield rest_title(data["title"], char="=") + "\n\n"
 
-    # Save the commits output in a plain text file .md
-    dir_fichero = 'fichero_git.md'
-
-    fichero = open(dir_fichero, 'w')
     for version in data["versions"]:
         if len(version["sections"]) > 0:
             info = render_version(version) + "\n\n"
-            fichero.write(info)
             yield info
-    fichero.close()
 
 
 ## formatter engines
@@ -1596,6 +1590,7 @@ def versions_data_iter(repository, revlist=None,
             "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
+            "solicited_commits": get_revs(revs),
         }
 
         sections = collections.defaultdict(list)
@@ -1632,6 +1627,21 @@ def versions_data_iter(repository, revlist=None,
         if len(current_version["sections"]) != 0:
             yield current_version
         versions_done[tag] = current_version
+
+## Method that gets the id's solicited by users and return the information on the screen.
+def get_revs(revs):
+    try:
+        if revs != []:
+            first_commit = revs[-1]
+            second_commit = revs[0]
+
+            return "ID 1 solicited: %s - ID" \
+                   " 2 solicited: %s." % (first_commit, second_commit)
+
+        else:
+            return "Request for all commits made."
+    except ValueError:
+        return None
 
 ## Method that gets the complete url of the commit performed
 def get_url(repository, commit):
