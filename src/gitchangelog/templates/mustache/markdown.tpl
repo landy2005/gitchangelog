@@ -10,8 +10,8 @@
 ### {{{label}}}
 
 {{#commits}}
-* [{{{id}}}]({{{shortRemote}}}) - {{{subject}}} - {{#authors}}{{{.}}}{{/authors}} - {{{date}}}
-  {{#body}}{{{body_indented}}}{{/body}}
+* [{{{id}}}]({{{shortRemote}}}) - {{{date}}} - {{{subject}}} - {{#body}}{{{body_indented}}}{{/body}} - {{#authors}}{{{.}}}{{/authors}}
+
 
 {{/commits}}
 {{/sections}}

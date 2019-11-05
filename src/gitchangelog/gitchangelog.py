@@ -926,7 +926,7 @@ class GitCommit(SubGitObjectMixin):
     def date(self):
         d = datetime.datetime.utcfromtimestamp(
             float(self.author_date_timestamp))
-        return d.strftime('%Y-%m-%d')
+        return d.strftime('%d-%m-%Y')
 
     @property
     def has_annotated_tag(self):
@@ -1617,7 +1617,7 @@ def versions_data_iter(repository, revlist=None,
             sections[matched_section].append({
                 ## Add the id and date to use in the code output.
                 "id": commit.sha1_short,
-                "date": commit.author_date,
+                "date": commit.date,
                 "author": commit.author_name,
                 "authors": commit.authors,
                 "subject": subject_process(commit.subject),
