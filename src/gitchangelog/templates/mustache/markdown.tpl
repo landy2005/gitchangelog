@@ -6,6 +6,8 @@
 {{#versions}}
 ## Commits description
 
+### {{{solicited_tags}}}
+
 #### {{{solicited_commits}}}
 
 {{#sections}}

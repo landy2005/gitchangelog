@@ -1183,8 +1183,10 @@ class GitRepos(object):
         No firm reason for that, and it could change in future version.
 
         """
+
         if contains:
             tags = self.git.tag(contains=contains).split("\n")
+
         else:
             tags = self.git.tag().split("\n")
         ## Should we use new version name sorting ?  refering to :
@@ -1193,6 +1195,7 @@ class GitRepos(object):
         ## git version <2.0
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
+
 
     def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
             encoding=_preferred_encoding):
@@ -1513,6 +1516,7 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
 ## Data Structure
 ##
 
+
 def versions_data_iter(repository, revlist=None,
                        ignore_regexps=[],
                        section_regexps=[(None, '')],
@@ -1565,14 +1569,23 @@ def versions_data_iter(repository, revlist=None,
 
     tags.append(repository.commit("HEAD"))
 
+    ## Variable that will save the requested tags.
+    var_to_show = []
+
     if revlist:
         max_rev = repository.commit(revs[0])
         new_tags = []
+
+        var_to_show = revlist[0].split('..')
+        show_tags(var_to_show)
+
         for tag in tags:
             new_tags.append(tag)
+
             if max_rev <= tag:
                 break
         tags = new_tags
+
     else:
         max_rev = tags[-1]
 
@@ -1591,6 +1604,7 @@ def versions_data_iter(repository, revlist=None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
             "solicited_commits": get_revs(revs),
+            "solicited_tags": show_tags(var_to_show),
         }
 
         sections = collections.defaultdict(list)
@@ -1628,6 +1642,22 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
+## Method implementation that allows to see the requested tags
+def show_tags(var_to_show):
+    try:
+
+        if len(var_to_show) == 2:
+            first_tag = var_to_show[0]
+            second_tag = var_to_show[1]
+
+            return "From tag  %s to tag %s." % (first_tag, second_tag)
+
+        else:
+            return "No tags requested..."
+
+    except ValueError:
+        return None
+
 ## Method that gets the id's solicited by users and return the information on the screen.
 def get_revs(revs):
     try:
@@ -1640,6 +1670,7 @@ def get_revs(revs):
 
         else:
             return "Request for all commits made."
+
     except ValueError:
         return None
 
