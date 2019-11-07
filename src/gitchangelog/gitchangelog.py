@@ -1577,7 +1577,7 @@ def versions_data_iter(repository, revlist=None,
         new_tags = []
 
         var_to_show = revlist[0].split('..')
-        show_tags(var_to_show)
+        see_requests(var_to_show)
 
         for tag in tags:
             new_tags.append(tag)
@@ -1603,8 +1603,7 @@ def versions_data_iter(repository, revlist=None,
             "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
-            "solicited_commits": get_revs(revs),
-            "solicited_tags": show_tags(var_to_show),
+            "solicited_requests": see_requests(var_to_show),
         }
 
         sections = collections.defaultdict(list)
@@ -1642,37 +1641,22 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
-## Method implementation that allows to see the requested tags
-def show_tags(var_to_show):
+## Method implementation that allows users to see requests (tags or commits)
+def see_requests(var_to_show):
     try:
 
         if len(var_to_show) == 2:
-            first_tag = var_to_show[0]
-            second_tag = var_to_show[1]
+            first_ = var_to_show[0]
+            second_ = var_to_show[1]
 
-            return "From tag  %s to tag %s." % (first_tag, second_tag)
+            return "Instance review from %s to %s." % (first_, second_)
 
         else:
-            return "No tags requested..."
+            return "No reviews requested..."
 
     except ValueError:
         return None
 
-## Method that gets the id's solicited by users and return the information on the screen.
-def get_revs(revs):
-    try:
-        if revs != []:
-            first_commit = revs[-1]
-            second_commit = revs[0]
-
-            return "ID 1 solicited: %s - ID" \
-                   " 2 solicited: %s." % (first_commit, second_commit)
-
-        else:
-            return "Request for all commits made."
-
-    except ValueError:
-        return None
 
 ## Method that gets the complete url of the commit performed
 def get_url(repository, commit):
