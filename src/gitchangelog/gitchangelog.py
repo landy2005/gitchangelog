@@ -1641,6 +1641,50 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
+
+## Dividing commits
+def commit_split_a(commit):
+    general_split = (commit.subject)
+    to_string = list(general_split)
+    this_list = []
+    new_list = []
+    for i in general_split:
+        this_list.append(i)
+        to_string.remove(i)
+        string = "".join(to_string)
+
+        if i == ":":
+            new_list.append(string)  ## Removing first []
+            break
+
+    commit_split_b("".join(new_list))
+    return "".join(this_list)  ## It should return SGI:...
+
+
+def commit_split_b(new_list):
+    n_spaces = new_list.lstrip()
+    to_split = n_spaces.split(" ")
+
+    the_identifier = str(to_split[0])
+
+    del(to_split[0])
+    final_s = " ".join(to_split)
+    split_final(final_s)
+    return the_identifier  ## It should return NONE-ANTA...
+
+def split_final(final_s):
+    return final_s ## It should return the rest of the necessary commit
+
+def r_send(this_list, the_identifier, final_s):
+    s_dictionary = {
+        "first_s": commit_split_a(this_list),
+        "s_identifier": commit_split_b(the_identifier),
+        "complement": split_final(final_s),
+    }
+
+    return s_dictionary
+
+
 ## Method implementation that allows users to see requests (tags or commits)
 def see_requests(var_to_show):
     try:
