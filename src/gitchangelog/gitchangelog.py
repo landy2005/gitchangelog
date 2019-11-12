@@ -230,7 +230,9 @@ if WIN32 and not PY3:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s [--debug|-d] [REVLIST]"""
+  %(exname)s [--debug|-d] [REVLIST]
+  %(exname)s {-u|--url}"""
+
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -1630,7 +1632,7 @@ def versions_data_iter(repository, revlist=None,
                 "date": commit.date,
                 "author": commit.author_name,
                 "authors": commit.authors,
-                "subject": subject_process(commit.subject),
+                ## "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
                 "shortRemote": get_url(repository, commit),
                 "first_parameter": t_split["first_s"],
@@ -1675,7 +1677,7 @@ def commit_split_b(first_split):
 
     the_identifier = str(to_split[0])
 
-    del (to_split[0])
+    del(to_split[0])
     final_s = " ".join(to_split)
 
     '''if the_identifier == "NONE":
@@ -1761,7 +1763,8 @@ def changelog(output_engine=rest_py,
     }
 
     ## Setting main container of changelog elements
-    title = None if kwargs.get("revlist") else "Changelog"
+    ## title = None if kwargs.get("revlist") else "Changelog"
+    title = "Changelog"
     data = {"title": title,
             "versions": []}
 
@@ -1847,6 +1850,8 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
+
+    ##parser.add_argument('-u', '--url', nargs="*", action="")
 
     ## Remove "show" as first argument for compatibility reason.
 
