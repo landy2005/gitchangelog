@@ -1593,6 +1593,7 @@ def versions_data_iter(repository, revlist=None,
 
     tags = list(reversed(tags))
 
+
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
 
@@ -1619,6 +1620,7 @@ def versions_data_iter(repository, revlist=None,
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
+            t_split = r_send(commit)
 
             ## Finally storing the commit in the matching section
 
@@ -1631,6 +1633,9 @@ def versions_data_iter(repository, revlist=None,
                 "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
                 "shortRemote": get_url(repository, commit),
+                "first_parameter": t_split["first_s"],
+                "second_parameter": t_split["s_identifier"],
+                "third_parameter": t_split["complement"],
             })
 
         ## Flush current version
@@ -1641,10 +1646,9 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
-
 ## Dividing commits
-def commit_split_a(commit):
-    general_split = (commit.subject)
+def commit_split_a(general_split):
+    t_split = []
     to_string = list(general_split)
     this_list = []
     new_list = []
@@ -1657,33 +1661,45 @@ def commit_split_a(commit):
             new_list.append(string)  ## Removing first []
             break
 
-    commit_split_b("".join(new_list))
-    return "".join(this_list)  ## It should return SGI:...
+    second_split = "".join(new_list)
+    first_split = "".join(this_list)
+    t_split.append(first_split)
+    t_split.append(second_split)
+    return t_split  ## It should return SGI:...
 
-
-def commit_split_b(new_list):
-    n_spaces = new_list.lstrip()
+def commit_split_b(first_split):
+    second_split = first_split[1]
+    third_split = []
+    n_spaces = second_split.lstrip()
     to_split = n_spaces.split(" ")
 
     the_identifier = str(to_split[0])
 
-    del(to_split[0])
+    del (to_split[0])
     final_s = " ".join(to_split)
-    split_final(final_s)
-    return the_identifier  ## It should return NONE-ANTA...
 
-def split_final(final_s):
-    return final_s ## It should return the rest of the necessary commit
+    '''if the_identifier == "NONE":
+        return the_identifier  ## It should return NONE
 
-def r_send(this_list, the_identifier, final_s):
+    else:
+        return the_identifier  ## It should return url + ANTA...'''
+
+    third_split.append(the_identifier)
+    third_split.append(final_s)
+
+    return third_split
+
+def r_send(commit):
+    general_split = (commit.subject)
+    first_split = commit_split_a(general_split)
+    second_split = commit_split_b(first_split)
+
     s_dictionary = {
-        "first_s": commit_split_a(this_list),
-        "s_identifier": commit_split_b(the_identifier),
-        "complement": split_final(final_s),
+        "first_s": first_split[0],
+        "s_identifier": second_split[0],
+        "complement": second_split[1],
     }
-
     return s_dictionary
-
 
 ## Method implementation that allows users to see requests (tags or commits)
 def see_requests(var_to_show):

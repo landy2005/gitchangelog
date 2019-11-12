@@ -11,7 +11,7 @@
 {{#sections}}
 
 {{#commits}}
-* [{{{id}}}]({{{shortRemote}}}) - *{{{date}}}* - {{{subject}}} - {{#body}}{{{body_indented}}}{{/body}} - **{{#authors}}{{{.}}}{{/authors}}**
+* [{{{id}}}]({{{shortRemote}}}) - *{{{date}}}* - **{{{first_parameter}}}***{{{second_parameter}}}*m{{{third_parameter}}} - {{#body}}{{{body_indented}}}{{/body}} - **{{#authors}}{{{.}}}{{/authors}}**
 
 
 {{/commits}}
