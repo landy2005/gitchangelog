@@ -1735,8 +1735,9 @@ def get_url(repository, commit):
             if p_url == "git@":
                 url_r = url.replace(":", "/")
                 this_r = url_r[4:]
+                final_r = this_r[:-4]
                 p_url = "https://"
-                final_url_g = p_url + this_r + "commit/" + id
+                final_url_g = p_url + final_r + "/commit/" + id
                 return final_url_g
 
             else:
