@@ -1727,14 +1727,16 @@ def get_url(repository, commit):
     try:
         id = commit.sha1_short
         url = repository.git.config('remote.origin.url')
+
         if url:
             new_url = url[:-4]
-            p_url = url[4:]
+            p_url = url[:4]
+
             if p_url == "git@":
-                del[p_url]
                 url_r = url.replace(":", "/")
+                this_r = url_r[4:]
                 p_url = "https://"
-                final_url_g = p_url + url_r + "/commit/" + id
+                final_url_g = p_url + this_r + "commit/" + id
                 return final_url_g
 
             else:
