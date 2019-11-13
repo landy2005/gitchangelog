@@ -1528,6 +1528,7 @@ def versions_data_iter(repository, revlist=None,
                        subject_process=lambda x: x,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
                        warn=warn,        ## Mostly used for test
+                       jira_url="",
                        ):
     """Returns an iterator through versions data structures
 
@@ -1638,6 +1639,8 @@ def versions_data_iter(repository, revlist=None,
                 "first_parameter": t_split["first_s"],
                 "second_parameter": t_split["s_identifier"],
                 "third_parameter": t_split["complement"],
+                "condition_i": t_split["condition_i"],
+                "jira_url": jira_url,
             })
 
         ## Flush current version
@@ -1680,12 +1683,6 @@ def commit_split_b(first_split):
     del(to_split[0])
     final_s = " ".join(to_split)
 
-    '''if the_identifier == "NONE":
-        return the_identifier  ## It should return NONE
-
-    else:
-        return the_identifier  ## It should return url + ANTA...'''
-
     third_split.append(the_identifier)
     third_split.append(final_s)
 
@@ -1696,10 +1693,17 @@ def r_send(commit):
     first_split = commit_split_a(general_split)
     second_split = commit_split_b(first_split)
 
+    if second_split[0] == "NONE" or second_split[0] == "MERGE":
+        condition_i = False
+
+    else:
+        condition_i = True
+
     s_dictionary = {
         "first_s": first_split[0],
         "s_identifier": second_split[0],
         "complement": second_split[1],
+        "condition_i": condition_i,
     }
     return s_dictionary
 
@@ -1850,8 +1854,6 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
-
-    ##parser.add_argument('-u', '--url', nargs="*", action="")
 
     ## Remove "show" as first argument for compatibility reason.
 
@@ -2089,6 +2091,7 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            jira_url=config["url"],  ## It could work... ¡It worked!
         )
 
         if isinstance(content, basestring):
