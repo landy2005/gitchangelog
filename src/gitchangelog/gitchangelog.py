@@ -230,9 +230,7 @@ if WIN32 and not PY3:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s [--debug|-d] [REVLIST]
-  %(exname)s {-u|--url}"""
-
+  %(exname)s [--debug|-d] [REVLIST]"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -1731,8 +1729,18 @@ def get_url(repository, commit):
         url = repository.git.config('remote.origin.url')
         if url:
             new_url = url[:-4]
-            final_url = new_url + "/commit/" + id
-            return final_url
+            p_url = url[4:]
+            if p_url == "git@":
+                del[p_url]
+                url_r = url.replace(":", "/")
+                p_url = "https://"
+                final_url_g = p_url + url_r + "/commit/" + id
+                return final_url_g
+
+            else:
+                final_url = new_url + "/commit/" + id
+                return final_url
+
         else:
             return url
 
