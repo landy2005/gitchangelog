@@ -1691,11 +1691,11 @@ def r_send(commit):
     first_split = commit_split_a(general_split)
     second_split = commit_split_b(first_split)
 
-    if second_split[0] == "NONE" or second_split[0] == "MERGE":
-        condition_i = False
+    if re.search(r"^[A-Za-z].*[\d]+$", second_split[0]):
+        condition_i = True
 
     else:
-        condition_i = True
+        condition_i = False
 
     s_dictionary = {
         "first_s": first_split[0],
@@ -1729,7 +1729,6 @@ def get_url(repository, commit):
         url = repository.git.config('remote.origin.url')
 
         if url:
-            new_url = url[:-4]
             p_url = url[:4]
 
             if p_url == "git@":
@@ -1741,6 +1740,7 @@ def get_url(repository, commit):
                 return final_url_g
 
             else:
+                new_url = url[:-4]
                 final_url = new_url + "/commit/" + id
                 return final_url
 

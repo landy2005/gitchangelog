@@ -289,4 +289,4 @@ include_merge = True
 revs = []
 
 ## ´´url´´ is a string that allows you to concatenate with the Jira url. Important: Change url.
-url = 'https://github.com/gustavo15Rodriguez'
+url = ''
