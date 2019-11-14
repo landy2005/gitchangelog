@@ -230,7 +230,8 @@ if WIN32 and not PY3:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s [--debug|-d] [REVLIST]"""
+  %(exname)s [--debug|-d] [REVLIST]
+  %(exname)s {-c|--clean}"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -1527,6 +1528,7 @@ def versions_data_iter(repository, revlist=None,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
                        warn=warn,        ## Mostly used for test
                        jira_url="",
+                       clean=None,
                        ):
     """Returns an iterator through versions data structures
 
@@ -1866,6 +1868,9 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
 
+    parser.add_argument('-c', '--clean', nargs="*", help="Requires "
+                        "keywords (Ex. -c Item)", action="store")
+
     ## Remove "show" as first argument for compatibility reason.
 
     argv = []
@@ -1886,6 +1891,14 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
 eval_if_callable = lambda v: v() if callable(v) else v
 
+def get_clean(opts):
+    if opts.clean:
+        cleaner = opts.clean
+        print(cleaner)
+
+    else:
+        cleaner = opts.clean
+        return cleaner
 
 def get_revision(repository, config, opts):
     if opts.revlist:
@@ -2086,13 +2099,14 @@ def main():
 
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
+    clean = get_clean(opts)
     config['unreleased_version_label'] = eval_if_callable(
         config['unreleased_version_label'])
     manage_obsolete_options(config)
 
     try:
         content = changelog(
-            repository=repository, revlist=revlist,
+            repository=repository, revlist=revlist, clean=clean,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],
