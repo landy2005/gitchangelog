@@ -1550,7 +1550,7 @@ def versions_data_iter(repository, revlist=None,
     """
 
     revlist = revlist or []
-
+    clean = clean or []
     ## Hash to speedup lookups
     versions_done = {}
     excludes = [rev[1:]
@@ -1618,6 +1618,12 @@ def versions_data_iter(repository, revlist=None,
             encoding=log_encoding)
 
         for commit in commits:
+
+            ## Commit filtering
+            commiter = commit.subject
+            string = " ".join(clean)
+            this_f = commiter.find(string)
+
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
                 continue
@@ -1627,21 +1633,26 @@ def versions_data_iter(repository, revlist=None,
 
             ## Finally storing the commit in the matching section
 
-            sections[matched_section].append({
-                ## Add the id and date to use in the code output.
-                "id": commit.sha1_short,
-                "date": commit.date,
-                "author": commit.author_name,
-                "authors": commit.authors,
-                ## "subject": subject_process(commit.subject),
-                "body": body_process(commit.body),
-                "shortRemote": get_url(repository, commit),
-                "first_parameter": t_split["first_s"],
-                "second_parameter": t_split["s_identifier"],
-                "third_parameter": t_split["complement"],
-                "condition_i": t_split["condition_i"],
-                "jira_url": jira_url,
-            })
+
+            if this_f != -1:
+                pass
+
+            else:
+                sections[matched_section].append({
+                    ## Add the id and date to use in the code output.
+                    "id": commit.sha1_short,
+                    "date": commit.date,
+                    "author": commit.author_name,
+                    "authors": commit.authors,
+                    ## "subject": subject_process(commit.subject),
+                    "body": body_process(commit.body),
+                    "shortRemote": get_url(repository, commit),
+                    "first_parameter": t_split["first_s"],
+                    "second_parameter": t_split["s_identifier"],
+                    "third_parameter": t_split["complement"],
+                    "condition_i": t_split["condition_i"],
+                    "jira_url": jira_url,
+                })
 
         ## Flush current version
         current_version["sections"] = [{"label": k, "commits": sections[k]}
@@ -1752,6 +1763,14 @@ def get_url(repository, commit):
     except ValueError:
         return None
 
+## Cleaner parameters
+def get_parameters(opts):
+    if opts.clean:
+        cleaner = opts.clean
+        return cleaner
+
+    else:
+        return None
 
 def changelog(output_engine=rest_py,
               unreleased_version_label="unreleased",
@@ -1890,15 +1909,6 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
 
 eval_if_callable = lambda v: v() if callable(v) else v
-
-def get_clean(opts):
-    if opts.clean:
-        cleaner = opts.clean
-        print(cleaner)
-
-    else:
-        cleaner = opts.clean
-        return cleaner
 
 def get_revision(repository, config, opts):
     if opts.revlist:
@@ -2099,7 +2109,7 @@ def main():
 
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
-    clean = get_clean(opts)
+    clean = get_parameters(opts)
     config['unreleased_version_label'] = eval_if_callable(
         config['unreleased_version_label'])
     manage_obsolete_options(config)
@@ -2116,7 +2126,7 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
-            jira_url=config["url"],  ## It could work... ¡It worked!
+            jira_url=config["url"],  ## It could work... �It worked!
         )
 
         if isinstance(content, basestring):
