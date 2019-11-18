@@ -1629,7 +1629,7 @@ def versions_data_iter(repository, revlist=None,
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
-            t_split = r_send(commit)
+            t_split = r_send(commit, jira_url)
 
             ## Finally storing the commit in the matching section
 
@@ -1679,6 +1679,7 @@ def versions_data_iter(repository, revlist=None,
             yield current_version
         versions_done[tag] = current_version
 
+
 ## Dividing commits
 def commit_split_a(general_split):
     t_split = []
@@ -1700,6 +1701,7 @@ def commit_split_a(general_split):
     t_split.append(second_split)
     return t_split  ## It should return SGI:...
 
+
 def commit_split_b(first_split):
     second_split = first_split[1]
     third_split = []
@@ -1716,13 +1718,38 @@ def commit_split_b(first_split):
 
     return third_split
 
-def r_send(commit):
+
+## Add link for others jiras...
+def find_replace(second_split, jira_url):
+    complement = second_split[1].split(" ")
+    url = jira_url
+    _new_ = ""
+    ## Accessing Mustache directly.
+    renderer = pystache.Renderer()
+
+    for value in complement:
+        find = re.search(r"^[A-Z]*[\W-][\d]+$", value)
+
+        if find:
+            _new_ = str(second_split[1]).replace(value, url)
+            parsed = pystache.parse(
+                u"{{#render}}[{{value}}]({{{url}}}/{{{.}}}){{/render}}")
+            to_render = renderer.render(parsed, {'render': _new_})
+            return to_render
+
+        else:
+            _new_ = " ".join(complement)
+
+    return _new_
+
+
+def r_send(commit, jira_url):
     general_split = (commit.subject)
     first_split = commit_split_a(general_split)
     second_split = commit_split_b(first_split)
-    to_change = find_remplace(second_split)
+    to_change = find_replace(second_split, jira_url)
 
-    if re.search(r"^[A-Za-z].*[\d]+$", second_split[0]):
+    if re.search(r"^[A-Z]*[\W-][\d]+$", second_split[0]):
         condition_i = True
 
     else:
@@ -1731,7 +1758,7 @@ def r_send(commit):
     s_dictionary = {
         "first_s": first_split[0],
         "s_identifier": second_split[0],
-        "complement": second_split[1],
+        "complement": to_change,
         "condition_i": condition_i,
     }
     return s_dictionary
@@ -1789,19 +1816,6 @@ def get_parameters(opts):
 
     else:
         return None
-
-## Incompleted method
-def find_remplace(second_split):
-    complement = second_split[1]
-    print(second_split[0])
-
-    if re.search(r"^[A-Za-z].*[\d]+$", second_split[1]):
-        final_r = complement.replace(second_split[1], "www.google.com/"+second_split[1])
-
-        print(final_r)
-
-    else:
-        print("No se han encontrado coincidencias")
 
 
 def changelog(output_engine=rest_py,
