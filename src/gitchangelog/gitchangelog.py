@@ -1456,6 +1456,8 @@ else:
 def stdout(content):
     for chunk in content:
         safe_print(chunk)
+
+
 @available_in_config
 def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
                                 idx=lambda m: m.start()):
@@ -1620,9 +1622,9 @@ def versions_data_iter(repository, revlist=None,
         for commit in commits:
 
             ## Commit filtering
-            commiter = commit.subject
+            commit_f = commit.subject
             string = " ".join(clean)
-            this_f = commiter.find(string)
+            this_f = commit_f.find(string)
 
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
@@ -1721,31 +1723,30 @@ def commit_split_b(first_split):
 
 ## Add link for others jiras...
 def find_replace(second_split, jira_url):
-    complement = second_split[1].split(" ")
+    complement = second_split[1]
     url = jira_url
-    _new_ = ""
+
     ## Accessing Mustache directly.
     renderer = pystache.Renderer()
+    find = re.findall(r'[A-Z]*[\W-][\d]+', complement)
+    parsed = pystache.parse(
+        u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
 
-    for value in complement:
-        find = re.search(r"^[A-Z]*[\W-][\d]+$", value)
+    to_render = renderer.render(parsed, {
+        'render': find,
+        'link': url
+    })
 
+    for value in find:
         if find:
-            parsed = pystache.parse(
-                u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
-            to_render = renderer.render(parsed, {'render': value, 'link': url })
-            _new_ = str(second_split[1]).replace(value, to_render)
-
+            _new_ = complement.replace(value, to_render)
             return _new_
 
-        else:
-            _new_ = " ".join(complement)
-
-    return _new_
+    return complement
 
 
 def r_send(commit, jira_url):
-    general_split = (commit.subject)
+    general_split = commit.subject
     first_split = commit_split_a(general_split)
     second_split = commit_split_b(first_split)
     to_change = find_replace(second_split, jira_url)
@@ -1763,6 +1764,7 @@ def r_send(commit, jira_url):
         "condition_i": condition_i,
     }
     return s_dictionary
+
 
 ## Method implementation that allows users to see requests (tags or commits)
 def see_requests(var_to_show):
@@ -1808,6 +1810,7 @@ def get_url(repository, commit):
 
     except ValueError:
         return None
+
 
 ## Cleaner parameters
 def get_parameters(opts):
@@ -1863,6 +1866,7 @@ def changelog(output_engine=rest_py,
         data["versions"] = itertools.chain([first_version], versions)
 
     return output_engine(data=data, opts=opts)
+
 
 ##
 ## Manage obsolete options
