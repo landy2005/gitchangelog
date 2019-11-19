@@ -1731,11 +1731,12 @@ def find_replace(second_split, jira_url):
         find = re.search(r"^[A-Z]*[\W-][\d]+$", value)
 
         if find:
-            _new_ = str(second_split[1]).replace(value, url)
             parsed = pystache.parse(
-                u"{{#render}}[{{value}}]({{{url}}}/{{{.}}}){{/render}}")
-            to_render = renderer.render(parsed, {'render': _new_})
-            return to_render
+                u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
+            to_render = renderer.render(parsed, {'render': value, 'link': url })
+            _new_ = str(second_split[1]).replace(value, to_render)
+
+            return _new_
 
         else:
             _new_ = " ".join(complement)
