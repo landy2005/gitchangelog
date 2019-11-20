@@ -5,8 +5,6 @@
 {{/general_title}}
 
 {{#versions}}
-## Commits description
-
 ### {{{solicited_requests}}}
 
 {{#sections}}

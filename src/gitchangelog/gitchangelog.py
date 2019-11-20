@@ -1732,15 +1732,14 @@ def find_replace(second_split, jira_url):
     parsed = pystache.parse(
         u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
 
-    to_render = renderer.render(parsed, {
-        'render': find,
-        'link': url
-    })
+    for value in re.finditer(r'[A-Z]*[\W-][\d]+', complement):
+        to_render = renderer.render(parsed, {
+            'render': value.group(),
+            'link': url
+        })
 
-    for value in find:
-        if find:
-            _new_ = complement.replace(value, to_render)
-            return _new_
+        complement = re.sub(r'[A-Z]*[\W-][\d]+', to_render, complement)
+        return complement
 
     return complement
 
