@@ -1644,25 +1644,29 @@ def versions_data_iter(repository, revlist=None,
             ## Finally storing the commit in the matching section
 
             if clean:
+                result = bool
                 for value in clean:
-                    #this_f = re.findall(value, commit_f)
                     if value in commit_f:
-                        continue
+                        result = True
 
                     else:
-                        sections[matched_section].append({
-                            "id": commit.sha1_short,
-                            "date": commit.date,
-                            "author": commit.author_name,
-                            "authors": commit.authors,
-                            "body": body_process(commit.body),
-                            "shortRemote": get_url(repository, commit),
-                            "first_parameter": t_split["first_s"],
-                            "second_parameter": t_split["s_identifier"],
-                            "third_parameter": t_split["complement"],
-                            "condition_i": t_split["condition_i"],
-                            "jira_url": jira_url,
-                        })
+                        result = False
+
+                if result is False:
+                    sections[matched_section].append({
+                        ## Add the id and date to use in the code output.
+                        "id": commit.sha1_short,
+                        "date": commit.date,
+                        "author": commit.author_name,
+                        "authors": commit.authors,
+                        "body": body_process(commit.body),
+                        "shortRemote": get_url(repository, commit),
+                        "first_parameter": t_split["first_s"],
+                        "second_parameter": t_split["s_identifier"],
+                        "third_parameter": t_split["complement"],
+                        "condition_i": t_split["condition_i"],
+                        "jira_url": jira_url,
+                    })
 
             else:
                 sections[matched_section].append({
