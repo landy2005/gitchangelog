@@ -102,6 +102,7 @@ if WIN32 and not PY3:
             ("hStdOutput",      HANDLE), ("hStdError",     HANDLE),
         ]
 
+
     LPSTARTUPINFOW = ctypes.POINTER(STARTUPINFOW)
 
 
@@ -110,6 +111,7 @@ if WIN32 and not PY3:
             ("hProcess",         HANDLE), ("hThread",          HANDLE),
             ("dwProcessId",      DWORD),  ("dwThreadId",       DWORD),
         ]
+
 
     LPPROCESS_INFORMATION = ctypes.POINTER(PROCESS_INFORMATION)
 
@@ -461,6 +463,7 @@ def paragraph_wrap(text, regexp="\n\n"):
 def curryfy(f):
     return lambda *a, **kw: TextProc(lambda txt: f(txt, *a, **kw))
 
+
 ## these are curryfied version of their lower case definition
 
 Indent = curryfy(indent)
@@ -473,6 +476,7 @@ SetIfEmpty = curryfy(set_if_empty)
 for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
               "ucfirst", "strip", "SetIfEmpty"):
     _config_env[_label] = locals()[_label]
+
 
 ##
 ## File
@@ -536,6 +540,7 @@ def FileFirstRegexMatch(filename, pattern):
                 die("Named pattern used, but it was not valued.")
             return dct['rev']
         return match.group(0)
+
     return _call
 
 
@@ -543,7 +548,10 @@ def FileFirstRegexMatch(filename, pattern):
 def Caret(l):
     def _call():
         return "^%s" % eval_if_callable(l)
+
     return _call
+
+
 ##
 ## System functions
 ##
@@ -1114,6 +1122,7 @@ class GitCmd(SubGitObjectMixin):
             cli_args.extend(args)
 
             return dir_swrap(['git', label, ] + cli_args, shell=False)
+
         return method
 
 
@@ -1422,6 +1431,7 @@ if mako:
     mako_env = dict((f.__name__, f) for f in (ucfirst, indent, textwrap,
                                               paragraph_wrap))
 
+
     @available_in_config
     def makotemplate(template_name):
         """Return a callable that will render a changelog data structure
@@ -1623,8 +1633,6 @@ def versions_data_iter(repository, revlist=None,
 
             ## Commit filtering
             commit_f = commit.subject
-            string = " ".join(clean)
-            this_f = commit_f.find(string)
 
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
@@ -1635,26 +1643,26 @@ def versions_data_iter(repository, revlist=None,
 
             ## Finally storing the commit in the matching section
 
+            if clean:
+                for value in clean:
+                    #this_f = re.findall(value, commit_f)
+                    if value in commit_f:
+                        continue
 
-            if this_f:
-                if this_f != -1:
-                    pass
-
-                else:
-                    sections[matched_section].append({
-                        ## Add the id and date to use in the code output.
-                        "id": commit.sha1_short,
-                        "date": commit.date,
-                        "author": commit.author_name,
-                        "authors": commit.authors,
-                        "body": body_process(commit.body),
-                        "shortRemote": get_url(repository, commit),
-                        "first_parameter": t_split["first_s"],
-                        "second_parameter": t_split["s_identifier"],
-                        "third_parameter": t_split["complement"],
-                        "condition_i": t_split["condition_i"],
-                        "jira_url": jira_url,
-                    })
+                    else:
+                        sections[matched_section].append({
+                            "id": commit.sha1_short,
+                            "date": commit.date,
+                            "author": commit.author_name,
+                            "authors": commit.authors,
+                            "body": body_process(commit.body),
+                            "shortRemote": get_url(repository, commit),
+                            "first_parameter": t_split["first_s"],
+                            "second_parameter": t_split["s_identifier"],
+                            "third_parameter": t_split["complement"],
+                            "condition_i": t_split["condition_i"],
+                            "jira_url": jira_url,
+                        })
 
             else:
                 sections[matched_section].append({
@@ -1721,27 +1729,22 @@ def commit_split_b(first_split):
     return third_split
 
 
-## Add link for others jiras...
+## Add link for others jiras.
 def find_replace(second_split, jira_url):
     complement = second_split[1]
-    url = jira_url
 
     ## Accessing Mustache directly.
     renderer = pystache.Renderer()
-    find = re.findall(r'[A-Z]*[\W-][\d]+', complement)
     parsed = pystache.parse(
         u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
 
-    for value in re.finditer(r'[A-Z]*[\W-][\d]+', complement):
-        to_render = renderer.render(parsed, {
-            'render': value.group(),
-            'link': url
-        })
+    to_render = renderer.render(parsed, {
+        'render': r'\1 ',
+        'link': jira_url
+    })
+    to_change = re.sub(r'([A-Z]*[\W-][\d]+)', to_render, complement)
 
-        complement = re.sub(r'[A-Z]*[\W-][\d]+', to_render, complement)
-        return complement
-
-    return complement
+    return to_change
 
 
 def r_send(commit, jira_url):
@@ -1959,6 +1962,7 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
 
 eval_if_callable = lambda v: v() if callable(v) else v
+
 
 def get_revision(repository, config, opts):
     if opts.revlist:
