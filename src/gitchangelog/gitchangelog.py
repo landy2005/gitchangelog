@@ -1834,6 +1834,9 @@ def change_title(opts):
             new_title = opts.title
             return " ".join(new_title)
 
+        elif opts.title is []:
+            return "Changelog"
+
         else:
             return "Changelog"
 
