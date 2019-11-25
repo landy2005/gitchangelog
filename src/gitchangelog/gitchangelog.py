@@ -233,7 +233,8 @@ usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
   %(exname)s [--debug|-d] [REVLIST]
-  %(exname)s {-c|--clean}"""
+  %(exname)s {-c|--clean}
+  %(exname)s {-t|--title}"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -1541,6 +1542,7 @@ def versions_data_iter(repository, revlist=None,
                        warn=warn,        ## Mostly used for test
                        jira_url="",
                        clean=None,
+                       title=""
                        ):
     """Returns an iterator through versions data structures
 
@@ -1825,7 +1827,21 @@ def get_parameters(opts):
         return None
 
 
-def changelog(output_engine=rest_py,
+## Title parameters
+def change_title(opts):
+    try:
+        if opts.title:
+            new_title = opts.title
+            return " ".join(new_title)
+
+        else:
+            return "Changelog"
+
+    except TypeError:
+        return "Changelog"
+
+
+def changelog(title, output_engine=rest_py,
               unreleased_version_label="unreleased",
               warn=warn,        ## Mostly used for test
               **kwargs):
@@ -1853,7 +1869,8 @@ def changelog(output_engine=rest_py,
 
     ## Setting main container of changelog elements
     ## title = None if kwargs.get("revlist") else "Changelog"
-    title = "Changelog"
+
+    title = title
     data = {"title": title,
             "versions": []}
 
@@ -1943,6 +1960,9 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
     parser.add_argument('-c', '--clean', nargs="*", help="Requires "
                         "keywords (Ex. -c Item)", action="store")
+
+    parser.add_argument('-t', '--title', nargs="*", help="To change of "
+                        "changelog title.", action="store")
 
     ## Remove "show" as first argument for compatibility reason.
 
@@ -2165,13 +2185,14 @@ def main():
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
     clean = get_parameters(opts)
+    title = change_title(opts)
     config['unreleased_version_label'] = eval_if_callable(
         config['unreleased_version_label'])
     manage_obsolete_options(config)
 
     try:
         content = changelog(
-            repository=repository, revlist=revlist, clean=clean,
+            repository=repository, revlist=revlist, clean=clean, title=title,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],
