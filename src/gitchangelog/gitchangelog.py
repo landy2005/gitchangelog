@@ -1743,7 +1743,7 @@ def find_replace(second_split, jira_url):
         'render': r'\1 ',
         'link': jira_url
     })
-    to_change = re.sub(r'([A-Z]*[\W-][\d]+)', to_render, complement)
+    to_change = re.sub(r'([A-Z]+-[\d]+)', to_render, complement)
 
     return to_change
 
@@ -1754,7 +1754,7 @@ def r_send(commit, jira_url):
     second_split = commit_split_b(first_split)
     to_change = find_replace(second_split, jira_url)
 
-    if re.search(r"^[A-Z]*[\W-][\d]+$", second_split[0]):
+    if re.search(r"^[A-Z]+-[\d]+$", second_split[0]):
         condition_i = True
 
     else:
