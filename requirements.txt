@@ -1,0 +1,4 @@
+Mako==1.1.0
+MarkupSafe==1.1.1
+numpy==1.17.4
+pystache==0.5.4

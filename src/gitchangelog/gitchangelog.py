@@ -144,6 +144,7 @@ if WIN32 and not PY3:
     ## Patched functions/classes
     ##
 
+
     def CreateProcess(executable, args, _p_attr, _t_attr,
                       inherit_handles, creation_flags, env, cwd,
                       startup_info):
@@ -1742,7 +1743,7 @@ def find_replace(second_split, jira_url):
         u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
 
     to_render = renderer.render(parsed, {
-        'render': r'\1 ',
+        'render': r'\1',
         'link': jira_url
     })
     to_change = re.sub(r'([A-Z]+-[\d]+)', to_render, complement)
@@ -1774,7 +1775,6 @@ def r_send(commit, jira_url):
 ## Method implementation that allows users to see requests (tags or commits)
 def see_requests(var_to_show):
     try:
-
         if len(var_to_show) == 2:
             first_ = var_to_show[0]
             second_ = var_to_show[1]
