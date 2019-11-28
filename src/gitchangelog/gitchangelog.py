@@ -1844,7 +1844,7 @@ def change_title(opts):
         return "Changelog"
 
 
-def changelog(title, output_engine=rest_py,
+def changelog(title, output_engine=mustache,
               unreleased_version_label="unreleased",
               warn=warn,        ## Mostly used for test
               **kwargs):
@@ -2200,7 +2200,7 @@ def main():
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],
             tag_filter_regexp=config['tag_filter_regexp'],
-            output_engine=config.get("output_engine", rest_py),
+            output_engine=config.get("output_engine", mustache),
             include_merge=config.get("include_merge", True),
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
