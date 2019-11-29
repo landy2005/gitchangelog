@@ -537,7 +537,6 @@ def FileFirstRegexMatch(filename, pattern):
                 die("Named pattern used, but it was not valued.")
             return dct['rev']
         return match.group(0)
-
     return _call
 
 
@@ -834,12 +833,12 @@ class GitCommit(SubGitObjectMixin):
     Authors
     -------
 
-        >>> BODY = ('\\n'
-'        ... Stuff in the body\n'
-'        ... Co-Authored-By: Bob\n'
-'        ... Co-Authored-By: Alice\n'
-'        ... Co-Authored-By: Jack\n'
-'        ... ')
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Co-Authored-By: Bob
+        ... Co-Authored-By: Alice
+        ... Co-Authored-By: Jack
+        ... '''
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.author_names
@@ -1186,10 +1185,8 @@ class GitRepos(object):
         No firm reason for that, and it could change in future version.
 
         """
-
         if contains:
             tags = self.git.tag(contains=contains).split("\n")
-
         else:
             tags = self.git.tag().split("\n")
         ## Should we use new version name sorting ?  refering to :
