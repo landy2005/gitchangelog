@@ -102,7 +102,6 @@ if WIN32 and not PY3:
             ("hStdOutput",      HANDLE), ("hStdError",     HANDLE),
         ]
 
-
     LPSTARTUPINFOW = ctypes.POINTER(STARTUPINFOW)
 
 
@@ -111,7 +110,6 @@ if WIN32 and not PY3:
             ("hProcess",         HANDLE), ("hThread",          HANDLE),
             ("dwProcessId",      DWORD),  ("dwThreadId",       DWORD),
         ]
-
 
     LPPROCESS_INFORMATION = ctypes.POINTER(PROCESS_INFORMATION)
 
@@ -143,7 +141,6 @@ if WIN32 and not PY3:
     ##
     ## Patched functions/classes
     ##
-
 
     def CreateProcess(executable, args, _p_attr, _t_attr,
                       inherit_handles, creation_flags, env, cwd,
@@ -465,7 +462,6 @@ def paragraph_wrap(text, regexp="\n\n"):
 def curryfy(f):
     return lambda *a, **kw: TextProc(lambda txt: f(txt, *a, **kw))
 
-
 ## these are curryfied version of their lower case definition
 
 Indent = curryfy(indent)
@@ -478,7 +474,6 @@ SetIfEmpty = curryfy(set_if_empty)
 for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
               "ucfirst", "strip", "SetIfEmpty"):
     _config_env[_label] = locals()[_label]
-
 
 ##
 ## File
@@ -550,10 +545,7 @@ def FileFirstRegexMatch(filename, pattern):
 def Caret(l):
     def _call():
         return "^%s" % eval_if_callable(l)
-
     return _call
-
-
 ##
 ## System functions
 ##
@@ -807,11 +799,11 @@ class GitCommit(SubGitObjectMixin):
     ``GitCommit`` offers a simple direct API to trailer values. These
     are like RFC822's header value but are at the end of body:
 
-        >>> BODY = ('\\n'
-'        ... Stuff in the body\n'
-'        ... Change-id: 1234\n'
-'        ... Value-X: Supports multi\n'
-'        ...   line values')
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Change-id: 1234
+        ... Value-X: Supports multi
+        ...   line values'''
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_change_id
@@ -823,12 +815,12 @@ class GitCommit(SubGitObjectMixin):
     Notice how the multi-line value was unindented.
     In case of multiple values, these are concatened in lists:
 
-        >>> BODY = ('\\n'
-'        ... Stuff in the body\n'
-'        ... Co-Authored-By: Bob\n'
-'        ... Co-Authored-By: Alice\n'
-'        ... Co-Authored-By: Jack\n'
-'        ... ')
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Co-Authored-By: Bob
+        ... Co-Authored-By: Alice
+        ... Co-Authored-By: Jack
+        ... '''
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_co_authored_by
@@ -1124,7 +1116,6 @@ class GitCmd(SubGitObjectMixin):
             cli_args.extend(args)
 
             return dir_swrap(['git', label, ] + cli_args, shell=False)
-
         return method
 
 
@@ -1207,7 +1198,6 @@ class GitRepos(object):
         ## git version <2.0
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
-
 
     def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
             encoding=_preferred_encoding):
@@ -1369,8 +1359,7 @@ def rest_py(data, opts={}):
 
     for version in data["versions"]:
         if len(version["sections"]) > 0:
-            info = render_version(version) + "\n\n"
-            yield info
+            yield render_version(version) + "\n\n"
 
 
 ## formatter engines
@@ -1432,7 +1421,6 @@ if mako:
 
     mako_env = dict((f.__name__, f) for f in (ucfirst, indent, textwrap,
                                               paragraph_wrap))
-
 
     @available_in_config
     def makotemplate(template_name):
@@ -1531,7 +1519,6 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
 ## Data Structure
 ##
 
-
 def versions_data_iter(repository, revlist=None,
                        ignore_regexps=[],
                        section_regexps=[(None, '')],
@@ -1574,8 +1561,6 @@ def versions_data_iter(repository, revlist=None,
                 if rev.startswith("^")] if revlist else []
 
     revs = repository.git.rev_list(*revlist).split("\n") if revlist else []
-
-
     revs = [rev for rev in revs if rev != ""]
 
     if revlist and not revs:
@@ -1610,7 +1595,6 @@ def versions_data_iter(repository, revlist=None,
     section_order = [k for k, _v in section_regexps]
 
     tags = list(reversed(tags))
-
 
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
@@ -1889,7 +1873,6 @@ def changelog(title, output_engine=mustache,
         data["versions"] = itertools.chain([first_version], versions)
 
     return output_engine(data=data, opts=opts)
-
 
 ##
 ## Manage obsolete options
