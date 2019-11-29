@@ -1573,10 +1573,7 @@ def versions_data_iter(repository, revlist=None,
     if revlist:
         max_rev = repository.commit(revs[0])
         new_tags = []
-
         var_to_show = revlist[0].split('..')
-        see_requests(var_to_show)
-
         for tag in tags:
             new_tags.append(tag)
             if max_rev <= tag:
