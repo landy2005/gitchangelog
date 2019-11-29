@@ -1453,8 +1453,6 @@ else:
 def stdout(content):
     for chunk in content:
         safe_print(chunk)
-
-
 @available_in_config
 def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
                                 idx=lambda m: m.start()):
@@ -1581,11 +1579,9 @@ def versions_data_iter(repository, revlist=None,
 
         for tag in tags:
             new_tags.append(tag)
-
             if max_rev <= tag:
                 break
         tags = new_tags
-
     else:
         max_rev = tags[-1]
 
