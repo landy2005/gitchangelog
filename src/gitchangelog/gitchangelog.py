@@ -20,6 +20,8 @@ import errno
 
 from subprocess import Popen, PIPE
 
+from numpy import unicode
+
 try:
     import pystache
 except ImportError:  ## pragma: no cover
@@ -228,7 +230,9 @@ if WIN32 and not PY3:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s [--debug|-d] [REVLIST]"""
+  %(exname)s [--debug|-d] [REVLIST]
+  %(exname)s {-c|--clean}
+  %(exname)s {-t|--title}"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -570,7 +574,7 @@ class Phile(object):
         ...         _obj.seek(0)
         ...         return _obj
         ... else:
-        ...     from cStringIO import StringIO as File
+        ...     from io import StringIO as File
 
         >>> f = Phile(File("a-b-c-d"))
 
@@ -924,7 +928,7 @@ class GitCommit(SubGitObjectMixin):
     def date(self):
         d = datetime.datetime.utcfromtimestamp(
             float(self.author_date_timestamp))
-        return d.strftime('%Y-%m-%d')
+        return d.strftime('%d-%m-%Y')
 
     @property
     def has_annotated_tag(self):
@@ -1329,11 +1333,17 @@ def rest_py(data, opts={}):
         return s
 
     def render_commit(commit, opts=opts):
-        subject = commit["subject"]
-        subject += " [%s]" % (", ".join(commit["authors"]), )
+        # Add the id and the date on which the commit was made
+        subject = ""
+        subject += "ID: [%s]" % ("".join(commit["id"])) + '\n\n'
+        subject += "Date: [%s]" % ("".join(commit["date"])) + '\n\n'
+        subject += "Description: [%s]" % ("".join(commit["subject"])) + '\n\n'
+        subject += "Author: [%s]" % (", ".join(commit["authors"])) + '\n\n'
 
         entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip() + "\n"
+
+        entry += "\n"
 
         if commit["body"]:
             entry += "\n" + indent(commit["body"])
@@ -1513,6 +1523,9 @@ def versions_data_iter(repository, revlist=None,
                        subject_process=lambda x: x,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
                        warn=warn,        ## Mostly used for test
+                       jira_url="",
+                       clean=None,
+                       title=""
                        ):
     """Returns an iterator through versions data structures
 
@@ -1534,7 +1547,7 @@ def versions_data_iter(repository, revlist=None,
     """
 
     revlist = revlist or []
-
+    clean = clean or []
     ## Hash to speedup lookups
     versions_done = {}
     excludes = [rev[1:]
@@ -1554,9 +1567,13 @@ def versions_data_iter(repository, revlist=None,
 
     tags.append(repository.commit("HEAD"))
 
+    ## Variable that will save the requested tags.
+    var_to_show = []
+
     if revlist:
         max_rev = repository.commit(revs[0])
         new_tags = []
+        var_to_show = revlist[0].split('..')
         for tag in tags:
             new_tags.append(tag)
             if max_rev <= tag:
@@ -1579,6 +1596,7 @@ def versions_data_iter(repository, revlist=None,
             "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
+            "solicited_requests": see_requests(var_to_show),
         }
 
         sections = collections.defaultdict(list)
@@ -1589,21 +1607,57 @@ def versions_data_iter(repository, revlist=None,
             encoding=log_encoding)
 
         for commit in commits:
+
+            ## Commit filtering
+            commit_f = [commit.subject]
+
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
+            t_split = r_send(commit, jira_url)
 
             ## Finally storing the commit in the matching section
 
-            sections[matched_section].append({
-                "author": commit.author_name,
-                "authors": commit.author_names,
-                "subject": subject_process(commit.subject),
-                "body": body_process(commit.body),
-                "commit": commit,
-            })
+            if clean:
+                for item in commit_f:
+                    find_c = True
+                    for i in clean:
+                        if i in item:
+                            find_c = False
+
+                    if find_c:
+                        sections[matched_section].append({
+                            "id": commit.sha1_short,
+                            "date": commit.date,
+                            "author": commit.author_name,
+                            "authors": commit.authors,
+                            "body": body_process(commit.body),
+                            "shortRemote": get_url(repository, commit),
+                            "first_parameter": t_split["first_s"],
+                            "second_parameter": t_split["s_identifier"],
+                            "third_parameter": t_split["complement"],
+                            "condition_i": t_split["condition_i"],
+                            "jira_url": jira_url,
+                        })
+
+            else:
+                sections[matched_section].append({
+                    ## Add the id and date to use in the code output.
+                    "id": commit.sha1_short,
+                    "date": commit.date,
+                    "author": commit.author_name,
+                    "authors": commit.authors,
+                    ## "subject": subject_process(commit.subject),
+                    "body": body_process(commit.body),
+                    "shortRemote": get_url(repository, commit),
+                    "first_parameter": t_split["first_s"],
+                    "second_parameter": t_split["s_identifier"],
+                    "third_parameter": t_split["complement"],
+                    "condition_i": t_split["condition_i"],
+                    "jira_url": jira_url,
+                })
 
         ## Flush current version
         current_version["sections"] = [{"label": k, "commits": sections[k]}
@@ -1614,7 +1668,157 @@ def versions_data_iter(repository, revlist=None,
         versions_done[tag] = current_version
 
 
-def changelog(output_engine=rest_py,
+## Dividing commits
+def commit_split_a(general_split):
+    t_split = []
+    to_string = list(general_split)
+    this_list = []
+    new_list = []
+    for i in general_split:
+        this_list.append(i)
+        to_string.remove(i)
+        string = "".join(to_string)
+
+        if i == ":":
+            new_list.append(string)  ## Removing first []
+            break
+
+    second_split = "".join(new_list)
+    first_split = "".join(this_list)
+    t_split.append(first_split)
+    t_split.append(second_split)
+    return t_split  ## It should return SGI:...
+
+
+def commit_split_b(first_split):
+    second_split = first_split[1]
+    third_split = []
+    n_spaces = second_split.lstrip()
+    to_split = n_spaces.split(" ")
+
+    the_identifier = str(to_split[0])
+
+    del(to_split[0])
+    final_s = " ".join(to_split)
+
+    third_split.append(the_identifier)
+    third_split.append(final_s)
+
+    return third_split
+
+
+## Add link for others jiras.
+def find_replace(second_split, jira_url):
+    complement = second_split[1]
+
+    ## Accessing Mustache directly.
+    renderer = pystache.Renderer()
+    parsed = pystache.parse(
+        u"{{#render}}[{{{.}}}]({{#link}}{{.}}{{/link}}/{{{.}}}){{/render}}")
+
+    to_render = renderer.render(parsed, {
+        'render': r'\1',
+        'link': jira_url
+    })
+    to_change = re.sub(r'([A-Z]+-[\d]+)', to_render, complement)
+
+    return to_change
+
+
+def r_send(commit, jira_url):
+    general_split = commit.subject
+    first_split = commit_split_a(general_split)
+    second_split = commit_split_b(first_split)
+    to_change = find_replace(second_split, jira_url)
+
+    if re.search(r"^[A-Z]+-[\d]+$", second_split[0]):
+        condition_i = True
+
+    else:
+        condition_i = False
+
+    s_dictionary = {
+        "first_s": first_split[0],
+        "s_identifier": second_split[0],
+        "complement": to_change,
+        "condition_i": condition_i,
+    }
+    return s_dictionary
+
+
+## Method implementation that allows users to see requests (tags or commits)
+def see_requests(var_to_show):
+    try:
+        if len(var_to_show) == 2:
+            first_ = var_to_show[0]
+            second_ = var_to_show[1]
+
+            return "Instance review from %s to %s." % (first_, second_)
+
+        else:
+            return "No reviews requested..."
+
+    except ValueError:
+        return None
+
+
+## Method that gets the complete url of the commit performed
+def get_url(repository, commit):
+    try:
+        id = commit.sha1_short
+        url = repository.git.config('remote.origin.url')
+
+        if url:
+            p_url = url[:4]
+
+            if p_url == "git@":
+                url_r = url.replace(":", "/")
+                this_r = url_r[4:]
+                final_r = this_r[:-4]
+                p_url = "https://"
+                final_url_g = p_url + final_r + "/commit/" + id
+                return final_url_g
+
+            else:
+                new_url = url[:-4]
+                final_url = new_url + "/commit/" + id
+                return final_url
+
+        else:
+            return url
+
+    except ValueError:
+        return None
+
+
+## Cleaner parameters
+def get_parameters(opts):
+    if opts.clean:
+        cleaner = opts.clean
+        return cleaner
+
+    else:
+        return None
+
+
+## Title parameters
+def change_title(opts):
+    try:
+        if opts.title:
+            new_title = opts.title
+            return " ".join(new_title)
+
+        elif opts.title is []:
+            return "Changelog"
+
+        else:
+            return "Changelog"
+
+    except TypeError:
+        return "Changelog"
+
+
+def changelog(title, output_engine=mustache,
               unreleased_version_label="unreleased",
               warn=warn,        ## Mostly used for test
               **kwargs):
@@ -1641,7 +1845,9 @@ def changelog(output_engine=rest_py,
     }
 
     ## Setting main container of changelog elements
-    title = None if kwargs.get("revlist") else "Changelog"
+    ## title = None if kwargs.get("revlist") else "Changelog"
+
+    title = title
     data = {"title": title,
             "versions": []}
 
@@ -1727,6 +1933,12 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
+
+    parser.add_argument('-c', '--clean', nargs="*", help="Requires "
+                        "keywords (Ex. -c Item)", action="store")
+
+    parser.add_argument('-t', '--title', nargs="*", help="To change of "
+                        "changelog title.", action="store")
 
     ## Remove "show" as first argument for compatibility reason.
 
@@ -1948,22 +2160,25 @@ def main():
 
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
+    clean = get_parameters(opts)
+    title = change_title(opts)
     config['unreleased_version_label'] = eval_if_callable(
         config['unreleased_version_label'])
     manage_obsolete_options(config)
 
     try:
         content = changelog(
-            repository=repository, revlist=revlist,
+            repository=repository, revlist=revlist, clean=clean, title=title,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],
             tag_filter_regexp=config['tag_filter_regexp'],
-            output_engine=config.get("output_engine", rest_py),
+            output_engine=config.get("output_engine", mustache),
             include_merge=config.get("include_merge", True),
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            jira_url=config["url"],  ## It could work... �It worked!
         )
 
         if isinstance(content, basestring):
